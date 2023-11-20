@@ -20,11 +20,17 @@ const openai = new OpenAI({
 
 client.on("messageCreate", async (message) => {
   if (message.author.bot) return;
-  //if (!CHANNELS.includes(message.channel.id)) return;
+  if (!CHANNELS.includes(message.channel.id)) return;
+
+  await message.channel.sendTyping();
+
+  const sendTypingInterval = setInterval(() => {
+    message.channel.sendTyping();
+  }, 5000);
 
   const response = await openai.chat.completions
     .create({
-      model: "gpt-3.5-turbo",
+      model: "gpt-4",
       messages: [
         {
           role: "system",
@@ -37,10 +43,21 @@ client.on("messageCreate", async (message) => {
       ],
     })
     .catch((error) => console.error("OpenAI API Error:", error));
+
+  clearInterval(sendTypingInterval);
+
+  if (!response) {
+    message.reply(
+      "I'm sorry, I'm having trouble thinking of a response right now."
+    );
+    return;
+  }
+
   message.reply(response.choices[0].message.content);
-  //interaction.reply(response.choices[0].message.content);
 });
 
 eventHandler(client);
 
 client.login(process.env.TOKEN);
+
+// node /src/index.js
